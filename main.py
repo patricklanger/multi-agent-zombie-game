@@ -2,7 +2,7 @@ import json
 import time
 from world import World
 from flask import Flask, render_template, request, Response
-from zombie_agent_simple import ZombieAgent
+from zombie_agent import ZombieAgent
 from pynput.keyboard import Listener
 
 
