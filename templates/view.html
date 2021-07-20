@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ZOMBIE ESCAPE</title>
+    <link rel="icon" type="image/png" href="https://image.flaticon.com/icons/png/512/1078/1078220.png" sizes="any">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+<p id="world"></p>
+<script>
+    $(function() {
+        function refresh() {
+            $.getJSON('http://127.0.0.1:5000/world' , function(data) {
+                var tbl_body = "";
+                world = data["world"]
+                $.each(world, function() {
+                    var tbl_row = "";
+                    $.each(this, function(k , v) {
+                        tbl_row += "<td style='width:20px; height:20px; background: "+v+";'></td>";
+                    });
+                    tbl_body += "<tr>"+tbl_row+"</tr>";
+                });
+                $("#world").html("<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\">"+tbl_body+"</table>");
+            });
+            setTimeout(refresh, 100);
+        }
+        refresh();
+    });
+</script>
+</body>
+</html>
