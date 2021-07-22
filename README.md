@@ -1,12 +1,18 @@
 # multi-agent-zombie-game
-Multi-agent zombie game build with SPADE (Smart Python Agent Development Environment) <br /><br />
+Multi-agent zombie game build with SPADE (Smart Python Agent Development Environment) 
+<br />
 
--> Setup SPADE and documentation <br />
-https://spade-mas.readthedocs.io/en/latest/
+To run the game you will need a SPADE installation and a running XMPP server.
+<br />
 
--> SPADE on GitHub <br />
-https://github.com/javipalanca/spade/blob/master/docs/index.rst
+SPADE documentation: https://spade-mas.readthedocs.io
+SPADE on GitHub: https://github.com/javipalanca/spade
+<br />
 
-<br /><br />
+SPADE recommend this XMPP server: https://prosody.im
+List of other XMPP servers: https://xmpp.org/software/servers.html
+<br />
+<br />
+
 Game Example:
 ![alt text](https://github.com/patricklanger/multi-agent-zombie-game/blob/main/img/game-example.png?raw=true)
