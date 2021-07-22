@@ -4,7 +4,8 @@ import json
 import asyncio
 # TODO import
 
-# TODO name states
+STATE_SEARCHING = "SEARCHING"
+STATE_HUNTING = "HUNTING"
 
 SERVER = "http://127.0.0.1:5000"
 
