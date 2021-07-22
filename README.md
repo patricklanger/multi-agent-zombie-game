@@ -6,3 +6,5 @@ https://spade-mas.readthedocs.io/en/latest/
 
 -> SPADE on GitHub <br />
 https://github.com/javipalanca/spade/blob/master/docs/index.rst
+
+![alt text](https://github.com/patricklanger/multi-agent-zombie-game/blob/main/img/game-example.png?raw=true)
