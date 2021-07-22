@@ -1,3 +1,15 @@
+"""
+MULTI AGENT ZOMBIE GAME
+
+To run the game you will need a SPADE installation and a running XMPP server.
+
+SPADE documentation: https://spade-mas.readthedocs.io
+SPADE on GitHub: https://github.com/javipalanca/spade
+
+SPADE recommend this XMPP server: https://prosody.im
+List of other XMPP servers: https://xmpp.org/software/servers.html
+"""
+
 import json
 import time
 from world import World
