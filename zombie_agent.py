@@ -114,85 +114,102 @@ class ZombieBehaviour(FSMBehaviour):
         self.agent.position = json.loads(res.text)["position"]  # (x, y)
         self.agent.guy = False  # if guy is not False, it is (x, y) of the guy
 
+    class Searching(ZombieState):
+        """
+        Searching state. The initial state.
+        """
+        async def run(self):
+            """
+            Waits for a predefined time, choose a random direction, make a move request.
+            If guy wasn't seen at the new position:
+                Stay in Searching state
+            If guy was seen at the new position:
+                Change next_state to Hunting state and call inform_friend about the guy position
+            :return:
+            """
+            await asyncio.sleep(SLEEP_TIME)
+            move_to = random.choice(self.agent.actions)
+            await self.send_move_request(move_to)
+            if self.agent.guy:
+                self.set_next_state(STATE_HUNTING)
+                try:
+                    await self.inform_friends(self.agent.guy)
+                except Exception:
+                    pass
+            else:
+                self.set_next_state(STATE_SEARCHING)
 
-class Searching(ZombieState):
-    """
-    Searching state. The initial state.
-    """
-    async def run(self):
-        """
-        Waits for a predefined time, choose a random direction, make a move request.
-        If guy wasn't seen at the new position:
-            Stay in Searching state
-        If guy was seen at the new position:
-            Change next_state to Hunting state and call inform_friend about the guy position
-        :return:
-        """
-        await asyncio.sleep(SLEEP_TIME)
-        move_to = random.choice(self.agent.actions)
-        await self.send_move_request(move_to)
-        if self.agent.guy:
-            self.set_next_state(STATE_HUNTING)
+        async def inform_friends(self, guy_pos):
+            """
+            Makes a get_friends request to the server to get addresses of other zombies nearby and sends the guy_pos to
+            all addresses.
+            :param guy_pos: (x, y) as int-tuple
+            :return:
+            """
             try:
-                await self.inform_friends(self.agent.guy)
-            except Exception:
-                pass
-        else:
-            self.set_next_state(STATE_SEARCHING)
+                res = requests.get(f"{SERVER}/get_friends?name={self.agent.name}")
+                res = json.loads(res.text)
+                for friend in res:
+                    msg = Message(to=friend)     # Instantiate the message
+                    msg.body = json.dumps(guy_pos)  # Set the message content
+                    await self.send(msg)
+            except Exception as e:
+                print(f"{self.agent.name} cant communicate...")
+                print(e)
 
-    async def inform_friends(self, guy_pos):
+    class Hunting(ZombieState):
         """
-        Makes a get_friends request to the server to get addresses of other zombies nearby and sends the guy_pos to
-        all addresses.
-        :param guy_pos: (x, y) as int-tuple
-        :return:
+        Hunting state.
         """
-        try:
-            res = requests.get(f"{SERVER}/get_friends?name={self.agent.name}")
-            res = json.loads(res.text)
-            for friend in res:
-                msg = Message(to=friend)     # Instantiate the message
-                msg.body = json.dumps(guy_pos)  # Set the message content
-                await self.send(msg)
-        except Exception as e:
-            print(f"{self.agent.name} cant communicate...")
-            print(e)
-
-
-class Hunting(ZombieState):
-    """
-    Hunting state.
-    """
-    async def run(self):
-        """
-        Waits for a predefined time, choose a the best direction to reach position of the guy, make a move request.
-        If guy wasn't seen at the new position:
-            Change next_state to Searching state
-        If guy was seen at the new position:
-            Stay in Hunting state
-        :return:
-        """
-        await asyncio.sleep(SLEEP_TIME)
-        move_to = decide_next_move(self.agent.guy, self.agent.position)
-        await self.send_move_request(move_to)
-        if not self.agent.guy:
-            self.set_next_state(STATE_SEARCHING)
-        else:
-            self.set_next_state(STATE_HUNTING)
+        async def run(self):
+            """
+            Waits for a predefined time, choose a the best direction to reach position of the guy, make a move request.
+            If guy wasn't seen at the new position:
+                Change next_state to Searching state
+            If guy was seen at the new position:
+                Stay in Hunting state
+            :return:
+            """
+            await asyncio.sleep(SLEEP_TIME)
+            move_to = decide_next_move(self.agent.guy, self.agent.position)
+            await self.send_move_request(move_to)
+            if not self.agent.guy:
+                self.set_next_state(STATE_SEARCHING)
+            else:
+                self.set_next_state(STATE_HUNTING)
 
 
 class ReceiveMsg(CyclicBehaviour):
+    """
+    Cyclic Behaviour to receive messages. Run method repeats after its done.
+    """
     async def run(self):
-        msg = await self.receive(timeout=0.1)
+        """
+        Wait up to 10 sec. for an incoming message.
+        If a message arrives an the agent have no position of guy:
+            Update guy position.
+        :return:
+        """
+        msg = await self.receive(timeout=10)
         if msg and not self.agent.guy:
-            self.agent.guy = json.loads(msg.body) #nearest_goal(self.agent.position, self.agent.guy, )
+            self.agent.guy = json.loads(msg.body)
 
 
 class ZombieAgent(Agent):
+    """
+    The Zombie agent inherits from Agent class.
+    """
     async def setup(self):
+        """
+        Classes who inherits from Agent class must implement a setup method.
+        Creates the ZombieBehavior, adds the Searching and the Hunting state to the Finite State Machine behaviour,
+        adds the needed transitions to the behavior and adds the behaviour to the agent.
+        Creates the cyclic ReceiveMsg behaviour and adds it to the agents behaviours.
+        :return:
+        """
         fsm = ZombieBehaviour()
-        fsm.add_state(name=STATE_SEARCHING, state=Searching(), initial=True)
-        fsm.add_state(name=STATE_HUNTING, state=Hunting())
+        fsm.add_state(name=STATE_SEARCHING, state=fsm.Searching(), initial=True)
+        fsm.add_state(name=STATE_HUNTING, state=fsm.Hunting())
         fsm.add_transition(source=STATE_SEARCHING, dest=STATE_SEARCHING)
         fsm.add_transition(source=STATE_SEARCHING, dest=STATE_HUNTING)
         fsm.add_transition(source=STATE_HUNTING, dest=STATE_HUNTING)
